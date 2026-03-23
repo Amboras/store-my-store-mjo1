@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { medusaClient } from '@/lib/medusa-client'
 import Image from 'next/image'
-import AddToCart from '@/components/add-to-cart'
+import AddToCart from '@/components/product/add-to-cart'
 
 async function getProduct(handle: string) {
   try {
