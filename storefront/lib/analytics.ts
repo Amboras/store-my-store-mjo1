@@ -28,6 +28,7 @@ interface AnalyticsPayload {
 class AnalyticsTracker {
   private sessionId: string | null = null
   private storeId: string
+  private publishableKey: string
   private endpoint: string
   private eventQueue: AnalyticsEvent[] = []
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null
@@ -39,7 +40,13 @@ class AnalyticsTracker {
 
   constructor() {
     this.storeId = process.env.NEXT_PUBLIC_STORE_ID || ''
-    this.endpoint = process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT || ''
+    this.publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || ''
+    // Use Medusa backend URL for analytics (with /store/analytics prefix)
+    // Falls back to legacy NEXT_PUBLIC_ANALYTICS_ENDPOINT for backward compat
+    const medusaUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || ''
+    this.endpoint = medusaUrl
+      ? `${medusaUrl}/store/analytics`
+      : process.env.NEXT_PUBLIC_ANALYTICS_ENDPOINT || ''
 
     this.handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
@@ -125,7 +132,11 @@ class AnalyticsTracker {
 
     fetch(`${this.endpoint}/events`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Store-Environment-ID': this.storeId,
+        ...(this.publishableKey ? { 'x-publishable-api-key': this.publishableKey } : {}),
+      },
       body: JSON.stringify(payload),
       keepalive: true,
     }).catch(() => {
@@ -143,8 +154,21 @@ class AnalyticsTracker {
     }
     this.eventQueue = []
 
-    const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
-    navigator.sendBeacon(`${this.endpoint}/events`, blob)
+    // sendBeacon doesn't support custom headers, so use fetch with keepalive
+    fetch(`${this.endpoint}/events`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Store-Environment-ID': this.storeId,
+        ...(this.publishableKey ? { 'x-publishable-api-key': this.publishableKey } : {}),
+      },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }).catch(() => {
+      // Last resort: sendBeacon (no custom headers, may fail store routing)
+      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' })
+      navigator.sendBeacon(`${this.endpoint}/events`, blob)
+    })
   }
 
   private startHeartbeat(): void {
