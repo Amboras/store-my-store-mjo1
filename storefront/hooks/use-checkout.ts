@@ -33,6 +33,7 @@ export function useCheckout() {
   const [isUpdating, setIsUpdating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [paymentSession, setPaymentSession] = useState<PaymentSession | null>(null)
+  const [isCompletingCheckout, setIsCompletingCheckout] = useState(false)
 
   const stripeConfig = useStripeConfig()
 
@@ -117,6 +118,14 @@ export function useCheckout() {
 
   const completeCheckout = async () => {
     if (!cart?.id) return null
+
+    // Prevent duplicate requests
+    if (isCompletingCheckout) {
+      console.log('Checkout already in progress, skipping duplicate request')
+      return null
+    }
+
+    setIsCompletingCheckout(true)
     setIsUpdating(true)
     setError(null)
 
@@ -140,10 +149,42 @@ export function useCheckout() {
         return null
       }
     } catch (err: any) {
-      setError(err?.message || 'Failed to place order')
+      const errorMessage = err?.message || 'Failed to place order'
+
+      // Handle idempotency conflict OR already completed cart - order was already created
+      if (errorMessage.includes('conflicted with another request') ||
+          errorMessage.includes('Idempotency') ||
+          errorMessage.includes('already completed')) {
+        console.log('Cart already completed detected - order was created previously')
+
+        // Try to fetch the completed cart/order
+        try {
+          const cartData = await getMedusaClient().store.cart.retrieve(cart.id)
+          if (cartData?.cart?.completed_at) {
+            // Cart was completed, clear it and treat as success
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('medusa_cart_id')
+            }
+            queryClient.invalidateQueries({ queryKey: ['cart'] })
+
+            // Return a minimal order object with the cart ID so redirect happens
+            return { id: cart.id } as any
+          }
+        } catch (retrieveErr) {
+          console.error('Failed to retrieve cart:', retrieveErr)
+          // If we can't retrieve it, just clear localStorage and show error
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('medusa_cart_id')
+          }
+          queryClient.invalidateQueries({ queryKey: ['cart'] })
+        }
+      }
+
+      setError(errorMessage)
       return null
     } finally {
       setIsUpdating(false)
+      setIsCompletingCheckout(false)
     }
   }
 

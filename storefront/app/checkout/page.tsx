@@ -137,6 +137,7 @@ export default function CheckoutPage() {
   }
 
   const handlePlaceOrder = async () => {
+    if (isUpdating) return // Prevent double-click
     clearError()
     const order = await completeCheckout()
     if (order) {

@@ -31,7 +31,16 @@ export function useCart() {
       if (cartId) {
         try {
           const response = await getMedusaClient().store.cart.retrieve(cartId)
-          return response.cart
+          const retrievedCart = response.cart
+
+          // Check if cart is already completed (has been turned into an order)
+          if (retrievedCart?.completed_at) {
+            console.log('Cart already completed, clearing and creating new cart')
+            clearCartId()
+            // Fall through to create new cart
+          } else {
+            return retrievedCart
+          }
         } catch (error) {
           console.log('Cart not found, creating new one')
           clearCartId()
