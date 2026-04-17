@@ -4,34 +4,35 @@
 
 @layer base {
   :root {
-    --background: 40 20% 98%;
-    --foreground: 0 0% 10%;
-    --muted: 40 10% 94%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 35 40% 50%;
-    --accent-foreground: 0 0% 100%;
-    --border: 40 10% 88%;
-    --ring: 35 40% 50%;
-    --primary: 0 0% 10%;
+    --background: 0 0% 98%;
+    --foreground: 0 0% 8%;
+    --muted: 80 5% 94%;
+    --muted-foreground: 0 0% 42%;
+    --accent: 74 90% 56%;
+    --accent-foreground: 0 0% 8%;
+    --border: 0 0% 88%;
+    --ring: 74 90% 56%;
+    --primary: 0 0% 8%;
     --primary-foreground: 0 0% 98%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
 
-    /* Brand colors (dynamically injected from Store.metadata.brand) */
-    /* Access in CSS: var(--brand-primary), var(--brand-secondary) */
-    /* Managed by BrandStyleInjector component */
+    /* Brand colors — FORGE */
+    --brand-primary: #0d0d0d;
+    --brand-secondary: #c8f135;
+    --brand-accent: #c8f135;
   }
 
   .dark {
     --background: 0 0% 6%;
-    --foreground: 40 20% 94%;
+    --foreground: 0 0% 96%;
     --muted: 0 0% 12%;
     --muted-foreground: 0 0% 55%;
-    --accent: 35 45% 55%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 74 90% 56%;
+    --accent-foreground: 0 0% 8%;
     --border: 0 0% 16%;
-    --ring: 35 45% 55%;
-    --primary: 40 20% 94%;
+    --ring: 74 90% 56%;
+    --primary: 0 0% 96%;
     --primary-foreground: 0 0% 6%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
@@ -72,33 +73,50 @@
     @apply w-full;
   }
 
-  /* Brand color utilities - uses colors from Store.metadata.brand */
+  /* Brand color utilities */
   .btn-brand-primary {
-    background-color: var(--brand-primary, hsl(var(--primary)));
-    color: white;
+    background-color: var(--brand-secondary, #c8f135);
+    color: #0d0d0d;
   }
   .btn-brand-primary:hover {
     opacity: 0.9;
   }
 
   .text-brand-primary {
-    color: var(--brand-primary, hsl(var(--primary)));
+    color: var(--brand-primary, #0d0d0d);
   }
 
   .text-brand-secondary {
-    color: var(--brand-secondary, hsl(var(--accent)));
+    color: var(--brand-secondary, #c8f135);
   }
 
   .border-brand-primary {
-    border-color: var(--brand-primary, hsl(var(--border)));
+    border-color: var(--brand-primary, #0d0d0d);
   }
 
   .bg-brand-primary {
-    background-color: var(--brand-primary, hsl(var(--primary)));
+    background-color: var(--brand-primary, #0d0d0d);
   }
 
   .bg-brand-secondary {
-    background-color: var(--brand-secondary, hsl(var(--accent)));
+    background-color: var(--brand-secondary, #c8f135);
+  }
+
+  /* FORGE-specific utilities */
+  .forge-lime {
+    color: #c8f135;
+  }
+
+  .bg-forge-dark {
+    background-color: #0d0d0d;
+  }
+
+  .bg-forge-lime {
+    background-color: #c8f135;
+  }
+
+  .border-forge-lime {
+    border-color: #c8f135;
   }
 }
 
@@ -109,7 +127,8 @@ html {
 
 /* Selection color */
 ::selection {
-  @apply bg-accent/20 text-foreground;
+  background-color: #c8f135;
+  color: #0d0d0d;
 }
 
 /* Focus styles */
@@ -131,4 +150,24 @@ html {
 
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
+}
+
+/* Ticker animation */
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-ticker {
+  animation: ticker 25s linear infinite;
+}
+
+/* Pulse glow for urgency */
+@keyframes pulse-lime {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200, 241, 53, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(200, 241, 53, 0); }
+}
+
+.animate-pulse-lime {
+  animation: pulse-lime 2s ease-in-out infinite;
 }
